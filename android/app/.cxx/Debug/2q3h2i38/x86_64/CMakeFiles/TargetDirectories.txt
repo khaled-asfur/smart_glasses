@@ -1,0 +1,2 @@
+C:/smart_glasses/android/app/.cxx/Debug/2q3h2i38/x86_64/CMakeFiles/edit_cache.dir
+C:/smart_glasses/android/app/.cxx/Debug/2q3h2i38/x86_64/CMakeFiles/rebuild_cache.dir
