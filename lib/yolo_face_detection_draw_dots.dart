@@ -9,14 +9,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 import 'dart:typed_data';
 
-class FaceRecognitionScreen extends StatefulWidget {
-  const FaceRecognitionScreen({super.key});
+class FaceRecognitionScreen2 extends StatefulWidget {
+  const FaceRecognitionScreen2({super.key});
 
   @override
-  State<FaceRecognitionScreen> createState() => _FaceRecognitionScreenState();
+  State<FaceRecognitionScreen2> createState() => _FaceRecognitionScreen2State();
 }
 
-class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
+class _FaceRecognitionScreen2State extends State<FaceRecognitionScreen2> {
   late tflite.Interpreter _interpreter;
   bool _isLoading = true;
   String _errorMessage = '';
@@ -94,6 +94,58 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
   // Rect.fromLTRB(276, 75, 351, 190), output(313,265,75,115
   // Output shape: [1, 300, 21]
 
+  // List<FaceDetectionResult> _parseOutputs(
+  //     List<List<List<dynamic>>> output, int width, int height) {
+  //   final outputTensor = _interpreter.getOutputTensor(0);
+  //   final quantParams = outputTensor.params;
+  //   final double scale = quantParams.scale;
+  //   final int zeroPoint = quantParams.zeroPoint;
+  //   const confidenceThreshold = 0.5;
+  //
+  //   debugPrint('scale = $scale');
+  //   debugPrint('zeroPoint = $zeroPoint');
+  //
+  //   // Output shape: [1, 300, 21]
+  //   final results = <FaceDetectionResult>[];
+  //   final detections = output[0];
+  //   for (final detection in detections) {
+  //     final double confidence = (detection[4] - zeroPoint) * scale;
+  //
+  //     if (confidence > confidenceThreshold) {
+  //       debugPrint('Detection confidence: $confidence');
+  //       // Assuming detection[0..3] are in normalized corner format (values between 0 and 1)
+  //       // Multiply by width/height to get pixel coordinates.
+  //       debugPrint("Detection details: $detection");
+  //       int index = 0;
+  //       final double x1 = ((detection[index] - zeroPoint) * scale) * width;
+  //       final double y1 = ((detection[index+1] - zeroPoint) * scale) * height;
+  //       final double x2 = ((detection[index+2] - zeroPoint) * scale) * width;
+  //       final double y2 = ((detection[index+3] - zeroPoint) * scale) * height;
+  //
+  //       debugPrint(
+  //           'Detection  quantized results from model: Rect.fromLTRB(x1: $x1, y1: $y1, x2: $x2, y2: $y2)');
+  //
+  //       final double left = x1.clamp(0, width.toDouble());
+  //       final double top = y1.clamp(0, height.toDouble());
+  //       final double right = x2.clamp(0, width.toDouble());
+  //       final double bottom = y2.clamp(0, height.toDouble());
+  //
+  //       results.add(FaceDetectionResult(
+  //         Rect.fromLTRB(left, top, right, bottom),
+  //         confidence,
+  //       ));
+  //       debugPrint(
+  //           'Detection accepted: Rect.fromLTRB($left, $top, $right, $bottom)');
+  //     }
+  //   }
+  //
+  //   debugPrint('Original results: ${results.length}');
+  //   final filteredResults = _nonMaxSuppression(results, 0.4);
+  //   debugPrint('Filtered results: ${filteredResults.length}');
+  //   return filteredResults;
+  // }
+
+// Modify the _parseOutputs method to return correct detections
   List<DetectionResult> _parseOutputs(
       List<List<List<dynamic>>> output, int width, int height) {
     final outputTensor = _interpreter.getOutputTensor(0);
@@ -102,49 +154,38 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     final int zeroPoint = quantParams.zeroPoint;
     const confidenceThreshold = 0.5;
 
-    debugPrint('scale = $scale');
-    debugPrint('zeroPoint = $zeroPoint');
-
-    // Output shape: [1, 300, 21]
     final results = <DetectionResult>[];
     final detections = output[0];
+
     for (final detection in detections) {
       final double confidence = (detection[4] - zeroPoint) * scale;
 
       if (confidence > confidenceThreshold) {
-        debugPrint('Detection confidence: $confidence');
-        // Assuming detection[0..3] are in normalized corner format (values between 0 and 1)
-        // Multiply by width/height to get pixel coordinates.
-        debugPrint("Detection details: $detection");
-        int index = 17;
-        final double x1 = ((detection[index] - zeroPoint) * scale) * width;
-        final double y1 = ((detection[index+1] - zeroPoint) * scale) * height;
-        final double x2 = ((detection[index+2] - zeroPoint) * scale) * width;
-        final double y2 = ((detection[index+3] - zeroPoint) * scale) * height;
+        final List<Offset> points = [];
 
-        debugPrint(
-            'Detection  quantized results from model: Rect.fromLTRB(x1: $x1, y1: $y1, x2: $x2, y2: $y2)');
+        // Process all 21 elements as individual coordinates
+        for (int i = 0; i < 21; i++) {
+          // Dequantize value
+          double value = (detection[i] - zeroPoint) * scale;
+          //double value = detection[i].toDouble();
+          // Convert normalized coordinate to pixel position
+          // Assume even indices are X, odd are Y (or any other scheme your model uses)
+          if (i % 2 == 0) { // Even index: X coordinate
+            double x = value * width;
+            // Get Y from next element if available
+            if (i + 1 < 21) {
+              double y = (detection[i + 1] - zeroPoint) * scale * height;
+              points.add(Offset(x, y));
+            }
+          }
+        }
 
-        final double left = x1.clamp(0, width.toDouble());
-        final double top = y1.clamp(0, height.toDouble());
-        final double right = x2.clamp(0, width.toDouble());
-        final double bottom = y2.clamp(0, height.toDouble());
-
-        results.add(DetectionResult(
-          Rect.fromLTRB(left, top, right, bottom),
-          confidence,
-        ));
-        debugPrint(
-            'Detection accepted: Rect.fromLTRB($left, $top, $right, $bottom)');
+        results.add(DetectionResult(points, confidence));
       }
     }
 
-    debugPrint('Original results: ${results.length}');
-    final filteredResults = _nonMaxSuppression(results, 0.4);
-    debugPrint('Filtered results: ${filteredResults.length}');
-    return filteredResults;
+    return results;
   }
-
   // List<DetectionResult> _parseOutputs(
   //     List<List<List<dynamic>>> output, int width, int height) {
   //   final outputTensor = _interpreter.getOutputTensor(0);
@@ -243,22 +284,22 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     return bytes;
   }
 
-  List<DetectionResult> _nonMaxSuppression(
-    List<DetectionResult> results,
-    double threshold,
-  ) {
-    results.sort((a, b) => b.confidence.compareTo(a.confidence));
-
-    final filtered = <DetectionResult>[];
-    while (results.isNotEmpty) {
-      final current = results.removeAt(0);
-      filtered.add(current);
-      results.removeWhere(
-          (detection) => _iou(current.rect, detection.rect) > threshold);
-    }
-
-    return filtered;
-  }
+  // List<FaceDetectionResult> _nonMaxSuppression(
+  //   List<FaceDetectionResult> results,
+  //   double threshold,
+  // ) {
+  //   results.sort((a, b) => b.confidence.compareTo(a.confidence));
+  //
+  //   final filtered = <FaceDetectionResult>[];
+  //   while (results.isNotEmpty) {
+  //     final current = results.removeAt(0);
+  //     filtered.add(current);
+  //     results.removeWhere(
+  //         (detection) => _iou(current.rect, detection.rect) > threshold);
+  //   }
+  //
+  //   return filtered;
+  // }
 
   double _iou(Rect a, Rect b) {
     final intersectionLeft = max(a.left, b.left);
@@ -292,7 +333,7 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
     return Center(
       child: _flutterImage != null
           ? CustomPaint(
-              painter: FacePainter(_flutterImage, _faces),
+              painter: FacePainter( _flutterImage, _faces),
               child: SizedBox(
                 width: _flutterImage!.width.toDouble(),
                 height: _flutterImage!.height.toDouble(),
@@ -304,10 +345,10 @@ class _FaceRecognitionScreenState extends State<FaceRecognitionScreen> {
 }
 
 class DetectionResult {
-  final Rect rect;
+  final List<Offset> points;
   final double confidence;
 
-  DetectionResult(this.rect, this.confidence);
+  DetectionResult(this.points, this.confidence);
 }
 
 // Updated FacePainter
@@ -319,73 +360,40 @@ class FacePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, ui.Size size) {
-    debugPrint('FacePainter initialized with ${faces.length} faces.');
     if (image != null) {
-      final srcRect = Rect.fromLTWH(
-          0, 0, image!.width.toDouble(), image!.height.toDouble());
+      final srcRect = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
       final dstRect = _centeredRect(size);
       canvas.drawImageRect(image!, srcRect, dstRect, Paint());
 
-      // Calculate scaling factors
       final scaleX = dstRect.width / image!.width;
       final scaleY = dstRect.height / image!.height;
 
-      final paint = Paint()
+      final paint1 = Paint()
         ..color = Colors.red
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
+        ..style = PaintingStyle.fill;
+      final paint2 = Paint()
+        ..color = Colors.blue
+        ..style = PaintingStyle.fill;
+int index =0;
       for (final result in faces) {
-        final scaledRect = Rect.fromLTRB(
-          result.rect.left * scaleX + dstRect.left,
-          // Offset by dstRect's position
-          result.rect.top * scaleY + dstRect.top,
-          result.rect.right * scaleX + dstRect.left,
-          result.rect.bottom * scaleY + dstRect.top,
-        );
-        // Debug print to check coordinates
-        //debugPrint('Drawing rect: $scaledRect');
-        if (scaledRect.left >= 0 &&
-            scaledRect.top >= 0 &&
-            scaledRect.right <= 352 &&
-            scaledRect.bottom <= 352) {
-          print('Drawing rect within bounds: $scaledRect');
-        } else {
-          print('Rect out of bounds: $scaledRect');
+
+                              dynamic paint = paint1;
+        if(index==1){
+          paint = paint2;
         }
-        canvas.drawRect(scaledRect, paint);
+        for (final point in result.points) {
+          final scaledX = point.dx * scaleX + dstRect.left;
+          final scaledY = point.dy * scaleY + dstRect.top;
+
+          // Draw a dot (small circle)
+          canvas.drawCircle(
+            Offset(scaledX, scaledY),
+            2.0, // Radius
+            paint,
+          );
+        }
+        index++;
       }
-      // canvas.drawRect(
-      //     Rect.fromLTRB(108, 36, 126, 5.0),
-      //     // Small rectangle within visible bounds
-      //     Paint()
-      //       ..color = Colors.blue
-      //       ..style = PaintingStyle.stroke
-      //       ..strokeWidth = 2);
-      //
-      // canvas.drawRect(
-      //     Rect.fromLTRB(20, 40, 150, 150),
-      //     // Small rectangle within visible bounds
-      //     Paint()
-      //       ..color = Colors.blue
-      //       ..style = PaintingStyle.stroke
-      //       ..strokeWidth = 2);
-      //
-      // canvas.drawRect(
-      //     Rect.fromLTRB(160, 40, 270, 170),
-      //     // Small rectangle within visible bounds
-      //     Paint()
-      //       ..color = Colors.blue
-      //       ..style = PaintingStyle.stroke
-      //       ..strokeWidth = 2);
-      //
-      // canvas.drawRect(
-      //     Rect.fromLTRB(276, 75, 351, 190),
-      //     // Small rectangle within visible bounds
-      //     Paint()
-      //       ..color = Colors.blue
-      //       ..style = PaintingStyle.stroke
-      //       ..strokeWidth = 2);
     }
   }
 
@@ -414,8 +422,9 @@ class FacePainter extends CustomPainter {
     }
   }
 
+
   @override
-  bool shouldRepaint(covariant FacePainter oldDelegate) {
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
   }
 }
