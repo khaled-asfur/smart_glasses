@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:smart_glasses/google_ml_kit_detection.dart';
 
@@ -23,17 +23,15 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
     _loadImageAndDetectFaces();
   }
 
-  Future<File> _writeBytesToFile(Uint8List bytes) async {
-    final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/temp_face.jpg');
-    return file.writeAsBytes(bytes, flush: true);
-  }
-
-  /// Load image from assets, write to a temporary file, and detect faces
+  /// Load image from gallery, decode it for display, and detect faces.
   Future<void> _loadImageAndDetectFaces() async {
-    // Load asset bytes
-    final ByteData data = await rootBundle.load('assets/images/img56.jpg');
-    final Uint8List bytes = data.buffer.asUint8List();
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile =
+    await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return; // No image selected
+
+    final File imageFile = File(pickedFile.path);
+    final Uint8List bytes = await imageFile.readAsBytes();
 
     // Decode the image for display
     final ui.Codec codec = await ui.instantiateImageCodec(bytes);
@@ -42,11 +40,8 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       _image = frameInfo.image;
     });
 
-    // Write bytes to a temporary file for face detection
-    final File tempFile = await _writeBytesToFile(bytes);
-
     // Use the existing service to detect faces
-    final faces = await _faceDetectorService.detectFaces(tempFile);
+    final faces = await _faceDetectorService.detectFaces(imageFile);
     setState(() {
       _faces = faces;
     });
@@ -65,19 +60,22 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       body: Center(
         child: _image == null
             ? CircularProgressIndicator()
-            : CustomPaint(
-                painter: FacePainter(_image!, _faces),
-                child: SizedBox(
-                  width: _image!.width.toDouble(),
-                  height: _image!.height.toDouble(),
-                ),
-              ),
+            : FittedBox(
+          fit: BoxFit.contain,
+          child: CustomPaint(
+            painter: FacePainter(_image!, _faces),
+            child: SizedBox(
+              width: _image!.width.toDouble(),
+              height: _image!.height.toDouble(),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-/// Custom Painter to draw bounding boxes around detected faces
+/// Custom Painter to draw bounding boxes around detected faces.
 class FacePainter extends CustomPainter {
   final ui.Image image;
   final List<Face>? faces;
@@ -91,10 +89,10 @@ class FacePainter extends CustomPainter {
       ..color = Colors.red
       ..strokeWidth = 3.0;
 
-    // Draw the original image
+    // Draw the original image.
     canvas.drawImage(image, Offset.zero, Paint());
 
-    // Draw bounding boxes around detected faces
+    // Draw bounding boxes around detected faces.
     if (faces != null) {
       for (Face face in faces!) {
         canvas.drawRect(face.boundingBox, paint);
