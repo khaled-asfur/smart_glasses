@@ -32,7 +32,7 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
   /// Load image from assets, write to a temporary file, and detect faces
   Future<void> _loadImageAndDetectFaces() async {
     // Load asset bytes
-    final ByteData data = await rootBundle.load('assets/images/img.jpg');
+    final ByteData data = await rootBundle.load('assets/images/img56.jpg');
     final Uint8List bytes = data.buffer.asUint8List();
 
     // Decode the image for display
@@ -66,12 +66,12 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         child: _image == null
             ? CircularProgressIndicator()
             : CustomPaint(
-          painter: FacePainter(_image!, _faces),
-          child: SizedBox(
-            width: _image!.width.toDouble(),
-            height: _image!.height.toDouble(),
-          ),
-        ),
+                painter: FacePainter(_image!, _faces),
+                child: SizedBox(
+                  width: _image!.width.toDouble(),
+                  height: _image!.height.toDouble(),
+                ),
+              ),
       ),
     );
   }

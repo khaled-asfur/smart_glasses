@@ -48,7 +48,7 @@ class _WebSocketHandlerState extends State<WebSocketHandler> {
         if (WebSocketTransformer.isUpgradeRequest(request)) {
           WebSocket socket = await WebSocketTransformer.upgrade(request);
           socket.listen(
-                (data) {
+            (data) {
               print('Image received from the smart glasses');
               handleGlassesMessage(data, socket);
             },
@@ -75,13 +75,14 @@ class _WebSocketHandlerState extends State<WebSocketHandler> {
   // Establishes a WebSocket connection to the main server
   void connectToServer() {
     try {
-      serverChannel = IOWebSocketChannel.connect('ws://192.168.2.238:8082/ws/image');
+      serverChannel =
+          IOWebSocketChannel.connect('ws://192.168.2.238:8082/ws/image');
       setState(() {
         connectionStatus = "Connected to main server";
       });
       print("Connected to main server");
       serverChannel.stream.listen(
-            (data) {
+        (data) {
           print('Response received from the server');
           handleServerMessage(data);
         },

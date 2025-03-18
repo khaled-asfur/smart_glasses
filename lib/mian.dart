@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_glasses/Face_detection_screen.dart';
 import 'package:smart_glasses/bridge_mobile.dart';
-import 'package:smart_glasses/yolo_face_detection_draw_dots.dart';
 
 void main() {
   runApp(MyApp());
@@ -50,8 +49,7 @@ class HomeScreenState extends State<HomeScreen> {
               // Navigate to the SecondScreen when the button is pressed.
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => FaceDetectionScreen()),
+                MaterialPageRoute(builder: (context) => FaceDetectionScreen()),
               );
             },
           ),

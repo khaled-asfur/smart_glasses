@@ -2,17 +2,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:smart_glasses/other/assets_face_detection_deep.dart';
+import 'package:smart_glasses/Face_detection_screen.dart';
 import 'package:smart_glasses/bridge_mobile.dart';
-import 'package:smart_glasses/yolo_face_detection.dart';
-// import 'package:smart_glasses/assets_face_detection.dart';
-
-import 'dart:math' as math;
-// import 'package:tflite_flutter/tflite_flutter.dart';
-// import 'package:image_picker/image_picker.dart';
-import 'package:image/image.dart' as img;
-
-//import 'package:smart_glasses/reviced_code.dart';
 
 void main() {
   runApp(MyApp());
@@ -42,7 +33,7 @@ class HomeScreenState extends State<HomeScreen> {
   HttpServer? _server;
   final List<WebSocket> _clients = [];
   final List<Uint8List> _images = [];
-  String ipAddress="";
+  String ipAddress = "";
 
   @override
   void initState() {
@@ -67,7 +58,8 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> _startServer() async {
     try {
       _server = await HttpServer.bind(InternetAddress.anyIPv4, 8080);
-      print('WebSocket server is running on ws://${_server!.address.address}:${_server!.port}');
+      print(
+          'WebSocket server is running on ws://${_server!.address.address}:${_server!.port}');
 
       _server!.listen((HttpRequest request) async {
         if (WebSocketTransformer.isUpgradeRequest(request)) {
@@ -135,7 +127,7 @@ class HomeScreenState extends State<HomeScreen> {
               // Navigate to the SecondScreen when the button is pressed.
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FaceRecognitionScreen()),
+                MaterialPageRoute(builder: (context) => FaceDetectionScreen()),
               );
             },
           ),
@@ -149,8 +141,10 @@ class HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          const Text('WebSocket Server running on port 8080', style: TextStyle(fontWeight: FontWeight.bold)),
-          Text('This device\'s IP address is $ipAddress', style:  const TextStyle(fontWeight: FontWeight.bold)),
+          const Text('WebSocket Server running on port 8080',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          Text('This device\'s IP address is $ipAddress',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           Expanded(
             child: ListView.builder(
               itemCount: _images.length,
