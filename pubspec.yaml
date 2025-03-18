@@ -38,6 +38,8 @@ dependencies:
   image_picker: ^0.8.7+4 # For loading images (optional, if you want to pick images from the gallery)
   image: ^4.1.4
   flutter_image: any
+  google_mlkit_face_detection: ^0.10.0
+  path_provider: ^2.1.2
 
   #  tflite_flutter: ^0.11.0  # TensorFlow Lite Flutter Plugin
   #  image_picker: ^1.1.2 # For selecting images from the gallery
@@ -76,6 +78,11 @@ flutter:
     - assets/models/yolov8n-face_full_integer_quant_fixed.tflite
     - assets/images/i.jpg
     - assets/images/img.jpg
+    - assets/images/img2.jpg
+    - assets/images/img3.jpg
+    - assets/images/img4.jpg
+    - assets/images/img5.jpg
+    - assets/images/img9.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
